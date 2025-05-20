@@ -72,7 +72,6 @@ temp/
 cache/
 videos/
 NPY/
-Plots/
 
 # Jupyter Notebook
 .ipynb_checkpoints
