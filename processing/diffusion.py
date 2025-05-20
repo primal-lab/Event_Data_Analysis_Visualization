@@ -22,7 +22,8 @@ def generate_heat_kernel_3d_np(T, H, W, k=0.05):
     Y, X = np.meshgrid(y, x, indexing='ij')
     kernel = np.zeros((T, H, W), dtype=np.float32)
     for t in range(1, T + 1):
-        kernel[t - 1] = heat_kernel(X, Y, t/T, k)
+        kernel[t - 1] = heat_kernel(X, Y, t/T, k) # This is equivalent to dividing 
+        # the alpha value by T which seems to provide better visual results
         kernel[t - 1] /= kernel[t - 1].sum()
     return kernel
 
