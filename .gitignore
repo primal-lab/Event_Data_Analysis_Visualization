@@ -94,4 +94,8 @@ var/
 wheels/
 *.egg-info/
 .installed.cfg
-*.egg 
+*.egg
+
+# Project specific directories
+backup/
+benchmark/ 
