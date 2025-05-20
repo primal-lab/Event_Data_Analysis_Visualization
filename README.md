@@ -34,8 +34,8 @@ A powerful Python-based toolkit for processing, analyzing, and visualizing event
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/event-data-analysis.git
-cd event-data-analysis
+git clone https://github.com/primal-lab/Event_Data_Analysis_Visualization.git
+cd Event_Data_Analysis_Visualization
 ```
 
 2. Create and activate the conda environment:
@@ -51,8 +51,8 @@ conda activate event_env
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/event-data-analysis.git
-cd event-data-analysis
+git clone https://github.com/primal-lab/Event_Data_Analysis_Visualization.git
+cd Event_Data_Analysis_Visualization
 ```
 
 2. Create and activate a conda environment:
@@ -118,19 +118,24 @@ The script generates:
 - Side-by-side videos
 - Visualization plots
 
+## 📝 TODO
+
+### High Priority
+- [ ] Clean up and optimize masked event diffusion implementation
+- [ ] Enhance quiver plot visualization
+
+
+### Medium Priority
+- [ ] Add System Arguments for the config file
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🙏 Acknowledgments
-
-- Event camera data processing community
-- PyTorch team for the excellent deep learning framework
-- OpenCV team for computer vision tools
 
 ## 📧 Contact
 
