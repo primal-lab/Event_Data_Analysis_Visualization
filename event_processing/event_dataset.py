@@ -3,48 +3,6 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-def process_window(i, events_cpu, frame_starts, kernel_depth, diffuse_time, event_step=1,
-                   height=None, width=None,
-                   dirname="/storage/mostafizt/EVIMO/train/box/txt/seq_11/event_tensor"):
-    """Process a window of events for a specific frame."""
-    frame_start = frame_starts[i]
-    save_path = f"{dirname}/window_{i:04d}.pt"
-
-    # Select events in time window
-    t_min = frame_start - diffuse_time
-    t_max = frame_start
-    mask = (events_cpu["t"] >= t_min) & (events_cpu["t"] <= t_max)
-
-    if not np.any(mask):
-        torch.save(torch.empty((0, 4), dtype=torch.float32), save_path)
-        return
-
-    x_f = events_cpu["x"][mask]
-    y_f = events_cpu["y"][mask]
-    t_f = events_cpu["t"][mask]
-    p_f = events_cpu["p"][mask]
-
-    # Subsample temporally
-    sampled_ts = np.unique(t_f)[::event_step]
-    keep_mask = np.isin(t_f, sampled_ts)
-    x_f, y_f, t_f, p_f = x_f[keep_mask], y_f[keep_mask], t_f[keep_mask], p_f[keep_mask]
-
-    # Optional spatial clipping
-    if height is not None and width is not None:
-        valid = (x_f >= 0) & (x_f < width) & (y_f >= 0) & (y_f < height)
-        x_f, y_f, t_f, p_f = x_f[valid], y_f[valid], t_f[valid], p_f[valid]
-
-    if len(x_f) == 0:
-        torch.save(torch.empty((0, 4), dtype=torch.float32), save_path)
-        return
-
-    # Precompute delta_t index
-    delta_t_idx = ((frame_start - t_f) * kernel_depth / diffuse_time).astype(np.int32)
-
-    # Stack and save
-    event_data = torch.tensor(np.stack([x_f, y_f, p_f, delta_t_idx], axis=1), dtype=torch.float32)
-    torch.save(event_data, save_path)
-
 class EventDataset(Dataset):
     def __init__(self, event_tensor_dir, kernel_np, rgb_frame_num, height, width):
         """

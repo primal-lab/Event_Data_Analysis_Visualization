@@ -5,6 +5,31 @@ import torch
 from tqdm import tqdm
 from .event_utils import load_events_fast, parse_meta
 
+from collections import defaultdict
+
+def bucket_event_files_by_count(file_list, get_event_count, bins=(0, 2e4, 1e5, float("inf"))):
+    """
+    Groups files by event count into bins.
+
+    Args:
+        file_list: List of paths or sample identifiers
+        get_event_count: Callable -> returns number of events for a file
+        bins: Tuple of bin edges (non-inclusive on right)
+
+    Returns:
+        Dictionary: {bin_idx: [file1, file2, ...]}
+    """
+    grouped = defaultdict(list)
+
+    for file in file_list:
+        count = get_event_count(file)
+        for i in range(len(bins) - 1):
+            if bins[i] <= count < bins[i + 1]:
+                grouped[i].append(file)
+                break
+
+    return grouped
+
 def process_window(i, events_cpu, frame_starts, kernel_depth, diffuse_time, event_step=1,
                    height=None, width=None,
                    dirname="/storage/mostafizt/EVIMO/train/box/txt/seq_11/event_tensor"):
@@ -118,7 +143,19 @@ def build_event_tensor(events, frame_info, height, width,  event_step=10, diffus
         "p": (polarity.detach().cpu().numpy() - 0.0)*1,
         "frame_idx": frame_indices_t.detach().cpu().numpy()
     }
+    frame_indices = events_cpu["frame_idx"]
+    unique_frames, counts = np.unique(frame_indices, return_counts=True)
+
+    # Store as dict: {frame_idx: event_count}
+    frame_event_count = dict(zip(unique_frames, counts))
     
+    grouped_bins = defaultdict(list)
+    bins=(0, 2e4, 1e5, float("inf"))
+    for frame_idx, count in frame_event_count.items():
+        for i in range(len(bins) - 1):
+            if bins[i] <= count < bins[i + 1]:
+                grouped_bins[i].append(frame_idx)
+                break
     # Masking condition
     t_cutoff = num_rgb_frames - mask_rgb_frames
     events_cpu["p"][events_cpu["frame_idx"] >= t_cutoff] = 0
@@ -146,4 +183,4 @@ def build_event_tensor(events, frame_info, height, width,  event_step=10, diffus
 )
 
 
-    return event_tensor, event_frame_rate, rgb_frame_rate, kernel_depth, img_list
+    return event_tensor, event_frame_rate, rgb_frame_rate, kernel_depth, img_list, grouped_bins

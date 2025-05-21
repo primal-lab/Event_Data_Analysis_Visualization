@@ -37,7 +37,7 @@ def apply_inferno_colormap(img):
 def convert_to_heatmap(diffused_frame):
     mean = diffused_frame.mean()
     std = diffused_frame.std()
-    normalized = np.clip((diffused_frame) / (mean + 4 * std + 1e-8), 0, 1)
+    normalized = np.clip((diffused_frame) / (mean + 4 * std + 1e-8), 0, 1) # For some reason, the heatmap for img normalized with mean + 4*std looks better
     img = (normalized * 255).astype(np.uint8)
     heatmap = cv2.applyColorMap(img, cv2.COLORMAP_INFERNO)
     return heatmap
@@ -93,7 +93,6 @@ def make_side_by_side_video(img_path, img_list, event_tensor, heat_tensor, out_p
     T = heat_tensor.shape[0]
     _, H, W = event_tensor.shape
     img_list = [os.path.join(img_path, i) for i in img_list]
-    print(img_list)
     out_w, out_h = W * 3, H
     fourcc = cv2.VideoWriter_fourcc(*codec)
     out_dir = os.path.dirname(out_path)

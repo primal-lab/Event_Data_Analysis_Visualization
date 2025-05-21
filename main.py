@@ -6,6 +6,7 @@ Main execution script for event data processing and visualization.
 import os
 import logging
 from pathlib import Path
+import time
 
 import torch
 import numpy as np
@@ -31,7 +32,7 @@ from config.config import (
     NUM_WORKERS,
     PIN_MEMORY,
     PERSISTENT_WORKERS,
-    
+    PREFETCH_FACTOR,
     # Video settings
     FPS,
     VIDEO_CODEC,
@@ -73,9 +74,16 @@ def process_frames(loader: DataLoader, device: torch.device) -> np.ndarray:
     N = len(loader.dataset)
     frame_buffer = np.zeros((N, H, W), dtype=np.float32)
     
+    # Track timing statistics
+    total_time = 0
+    load_times = []
+    kernel_times = []
+    event_counts = []
+    
     try:
         for F_r_batch, diffused_batch in tqdm(loader, desc="Generating Event Diffusion Frames"):
             diffused_batch = diffused_batch.to(device)
+            # Process each frame in the batch
             for i, frame_index in enumerate(F_r_batch):
                 frame_buffer[frame_index.item()] = diffused_batch[i].cpu().numpy()
     except Exception as e:
@@ -122,7 +130,7 @@ def main() -> None:
         
         # Generate event tensor
         logger.info("Generating event tensor...")
-        event_tensor, event_frame_rate, rgb_frame_rate, kernel_depth, img_list = build_event_tensor(
+        event_tensor, event_frame_rate, rgb_frame_rate, kernel_depth, img_list, _ = build_event_tensor(
             events=all_events,
             frame_info=frame_info,
             height=HEIGHT,
@@ -157,7 +165,8 @@ def main() -> None:
             shuffle=False,
             num_workers=NUM_WORKERS,
             pin_memory=PIN_MEMORY,
-            persistent_workers=PERSISTENT_WORKERS
+            persistent_workers=PERSISTENT_WORKERS,
+            prefetch_factor=PREFETCH_FACTOR
         )
         
         # Process frames
