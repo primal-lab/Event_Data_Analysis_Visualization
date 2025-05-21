@@ -23,6 +23,10 @@ WIDTH = 346
 K = 1.0  # Alpha value for heat kernel
 KERNEL_SIZE = (33, 33)  # (height, width) of the kernel
 
+# ================ CPU Parallel Processing Parameters ================
+USE_CPU_PARALLEL = True
+NUM_JOBS = -1
+
 # ================ DataLoader Parameters ================
 BATCH_SIZE = 1 # Batch size is 1 is typically faster than batch size > 1
     # because some event data has a lot of events and it slows down processing of the whole batch

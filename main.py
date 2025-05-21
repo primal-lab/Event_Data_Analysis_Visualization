@@ -24,6 +24,8 @@ from config.config import (
     
     # Data dimensions
     HEIGHT,
+    USE_CPU_PARALLEL,
+    NUM_JOBS,
     WIDTH,
     
     # DataLoader settings
@@ -90,11 +92,8 @@ def main() -> None:
         # Generate kernel
         logger.info("Generating diffusion kernel...")
         kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=1.0)
-        
-        # Process frames using either DataLoader or CPU parallel processing
-        use_cpu_parallel = True  # Set to True to use CPU parallel processing
-        
-        if use_cpu_parallel:
+         
+        if USE_CPU_PARALLEL:
             logger.info("Processing frames using CPU parallel processing...")
             frame_buffer = process_frames_cpu(
                 event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
