@@ -5,18 +5,17 @@ Main execution script for event data processing and visualization.
 
 import os
 import logging
-from pathlib import Path
-import time
-
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from data import load_events_fast, parse_meta
 from event_processing import build_event_tensor, EventDataset
 from processing import generate_heat_kernel_3d_np
 from visualization import make_side_by_side_video
+from utils.directory_utils import setup_directories
+from utils.frame_processing import process_frames, process_frames_cpu
+from utils.data_utils import save_results
 from config.config import (
     # Processing parameters
     EVENT_STEP,
@@ -52,62 +51,6 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-def setup_directories() -> None:
-    """Create necessary directories if they don't exist."""
-    dirs = ['NPY', 'Plots', 'videos']
-    for dir_name in dirs:
-        Path(dir_name).mkdir(exist_ok=True)
-
-def process_frames(loader: DataLoader, device: torch.device) -> np.ndarray:
-    """
-    Process frames using the dataloader and return the frame buffer.
-    
-    Args:
-        loader (DataLoader): DataLoader containing the event data
-        device (torch.device): Device to process on (CPU/GPU)
-    
-    Returns:
-        np.ndarray: Processed frame buffer
-    """
-    H, W = HEIGHT, WIDTH
-    N = len(loader.dataset)
-    frame_buffer = np.zeros((N, H, W), dtype=np.float32)
-    
-    # Track timing statistics
-    total_time = 0
-    load_times = []
-    kernel_times = []
-    event_counts = []
-    
-    try:
-        for F_r_batch, diffused_batch in tqdm(loader, desc="Generating Event Diffusion Frames"):
-            diffused_batch = diffused_batch.to(device)
-            # Process each frame in the batch
-            for i, frame_index in enumerate(F_r_batch):
-                frame_buffer[frame_index.item()] = diffused_batch[i].cpu().numpy()
-    except Exception as e:
-        logger.error(f"Error processing frames: {str(e)}")
-        raise
-    
-    return frame_buffer
-
-def save_results(frame_buffer: np.ndarray, event_tensor: torch.Tensor) -> None:
-    """
-    Save the processed results to NPY files.
-    
-    Args:
-        frame_buffer (np.ndarray): Processed frame buffer
-        event_tensor (torch.Tensor): Event tensor
-    """
-    try:
-        npy_filename = get_npy_filename()
-        np.save(npy_filename, frame_buffer, allow_pickle=True)
-        np.save("NPY/Events", event_tensor.cpu().numpy(), allow_pickle=True)
-        logger.info(f"Saved npy as {npy_filename}.npy")
-    except Exception as e:
-        logger.error(f"Error saving results: {str(e)}")
-        raise
 
 def main() -> None:
     """Main execution function."""
@@ -148,34 +91,45 @@ def main() -> None:
         logger.info("Generating diffusion kernel...")
         kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=1.0)
         
-        # Create dataset and dataloader
-        logger.info("Setting up dataset and dataloader...")
-        dataset = EventDataset(
-            event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
-            kernel_np=kernel,
-            rgb_frame_num=520, # The video has 628 frames but after 520 frames, 
-            #there seems to be some discontinuity in the rgb data so I hardcoded it to use 520 frames
-            height=HEIGHT,
-            width=WIDTH
-        )
+        # Process frames using either DataLoader or CPU parallel processing
+        use_cpu_parallel = True  # Set to True to use CPU parallel processing
         
-        loader = DataLoader(
-            dataset,
-            batch_size=BATCH_SIZE,
-            shuffle=False,
-            num_workers=NUM_WORKERS,
-            pin_memory=PIN_MEMORY,
-            persistent_workers=PERSISTENT_WORKERS,
-            prefetch_factor=PREFETCH_FACTOR
-        )
-        
-        # Process frames
-        logger.info("Processing frames...")
-        frame_buffer = process_frames(loader, device)
+        if use_cpu_parallel:
+            logger.info("Processing frames using CPU parallel processing...")
+            frame_buffer = process_frames_cpu(
+                event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
+                kernel=kernel,
+                num_frames=520,
+                height=HEIGHT,
+                width=WIDTH,
+                n_jobs=-1
+            )
+        else:
+            # Original DataLoader processing
+            logger.info("Processing frames using DataLoader...")
+            dataset = EventDataset(
+                event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
+                kernel_np=kernel,
+                rgb_frame_num=520,
+                height=HEIGHT,
+                width=WIDTH
+            )
+            
+            loader = DataLoader(
+                dataset,
+                batch_size=BATCH_SIZE,
+                shuffle=False,
+                num_workers=NUM_WORKERS,
+                pin_memory=PIN_MEMORY,
+                persistent_workers=PERSISTENT_WORKERS,
+                prefetch_factor=PREFETCH_FACTOR
+            )
+            
+            frame_buffer = process_frames(loader, device)
         
         # Save results
         logger.info("Saving results...")
-        save_results(frame_buffer, event_tensor)
+        save_results(frame_buffer, event_tensor, get_npy_filename())
         
         # Generate video
         logger.info("Generating visualization video...")
