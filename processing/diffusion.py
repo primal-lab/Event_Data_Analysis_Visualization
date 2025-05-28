@@ -17,44 +17,31 @@ def heat_kernel(x, y, t, k):
     exponent = -(x**2 + y**2) / (4 * k * (t + 1e-8))
     return (1 / denom) * np.exp(exponent)
 
+import numpy as np
+
 def heat_kernel_gradient(x, y, t, k):
-    denom = 4 * np.pi * k * (t + 1e-8)
-    exponent = -(x**2 + y**2) / (4 * k * (t + 1e-8))
-    return (1 / denom) * np.exp(exponent) * (-1* x / (2 * k * (t + 1e-8)))
+    """
+    Compute the spatial gradients of the 2D heat kernel with respect to x and y.
 
-def heat_kernel_gradient_components(x, y, t, k):
-    """Compute the x and y components of the heat kernel gradient."""
-    denom = 4 * np.pi * k * (t + 1e-8)
-    exponent = -(x**2 + y**2) / (4 * k * (t + 1e-8))
-    common_factor = (1 / denom) * np.exp(exponent)
-    dh_x = common_factor * (-1 * x / (2 * k * (t + 1e-8)))
-    dh_y = common_factor * (-1 * y / (2 * k * (t + 1e-8)))
-    return dh_x, dh_y
+    Parameters:
+        x (ndarray): X-coordinate grid or value(s)
+        y (ndarray): Y-coordinate grid or value(s)
+        t (float): Time parameter
+        k (float): Diffusion coefficient
 
-def compute_gradient_magnitude_and_angle(x, y, t, k):
-    """Compute the magnitude and angle of the heat kernel gradient."""
-    dh_x, dh_y = heat_kernel_gradient_components(x, y, t, k)
-    magnitude = np.sqrt(dh_x**2 + dh_y**2)
-    # print(magnitude)
-    # Normalize magnitude to be between 0 and 1
-    magnitude = magnitude / (np.min(magnitude) + 1e-8)
-    angle = np.arctan2(dh_y, dh_x)
-    return np.clip(magnitude, 0, 1), angle
+    Returns:
+        dH_dx (ndarray): Partial derivative of heat kernel with respect to x
+        dH_dy (ndarray): Partial derivative of heat kernel with respect to y
+    """
+    eps = 1e-8
+    denom = 4 * np.pi * k * (t + eps)
+    exponent = -(x**2 + y**2) / (4 * k * (t + eps))
+    H = (1 / denom) * np.exp(exponent)
 
-def plot_gradient_quiver(x, y, t, k, ax=None):
-    """Create a quiver plot of the heat kernel gradient."""
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(8, 8))
-    magnitude, angle = compute_gradient_magnitude_and_angle(x, y, t, k)
-    print(magnitude)
-    print(angle)
-    dh_x = magnitude * np.cos(angle)
-    dh_y = magnitude * np.sin(angle)
-    ax.quiver(x, y, dh_x, dh_y, scale=1)  # Adjusted scale for better visibility
-    ax.set_title(f'Heat Kernel Gradient Quiver Plot at t = {t}')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    return ax
+    dH_dx = H * (-x / (2 * k * (t + eps)))
+    dH_dy = H * (-y / (2 * k * (t + eps)))
+    
+    return dH_dx, dH_dy
 
 def generate_heat_kernel_3d_np(T, H, W, k=0.05):
     cy, cx = H // 2, W // 2
@@ -74,32 +61,34 @@ def generate_heat_kernel_3d_np(T, H, W, k=0.05):
     return kernel
 
 def generate_heat_kernel_gradient_3d_np(T, H, W, k=0.05):
+    """
+    Generate 3D gradient heat kernels (dH/dx and dH/dy) over time.
+
+    Parameters:
+        T (int): Number of time steps
+        H (int): Kernel height
+        W (int): Kernel width
+        k (float): Diffusion coefficient
+
+    Returns:
+        dH_dx_3d (np.ndarray): Gradient of heat kernel w.r.t x, shape (T, H, W)
+        dH_dy_3d (np.ndarray): Gradient of heat kernel w.r.t y, shape (T, H, W)
+    """
     cy, cx = H // 2, W // 2
     y = np.arange(H) - cy
     x = np.arange(W) - cx
     Y, X = np.meshgrid(y, x, indexing='ij')
-    kernel = np.zeros((T, H, W), dtype=np.float32)
-    for t in range(1, T + 1):
-        kernel[t - 1] = heat_kernel_gradient(X, Y, t/T, k)
-        # Add small epsilon to prevent division by zero
-        kernel_sum = kernel[t - 1].sum()
-        if kernel_sum > 0:
-            kernel[t - 1] /= kernel_sum
-        else:
-            kernel[t - 1] = np.zeros_like(kernel[t - 1])
-            kernel[t - 1, cy, cx] = 1.0  # Set center point to 1 if all zeros
-    return kernel
+    
+    dH_dx_3d = np.zeros((T, H, W), dtype=np.float32)
+    dH_dy_3d = np.zeros((T, H, W), dtype=np.float32)
 
-def apply_diffusion(state, kernel):
-    """Apply diffusion using convolution."""
-    from scipy.signal import convolve2d
-    # Ensure kernel is 2D
-    if len(kernel.shape) > 2:
-        kernel = kernel[0]  # Take first slice if 3D
-    # Normalize kernel
-    kernel = kernel / kernel.sum()
-    # Apply convolution
-    return convolve2d(state, kernel, mode='same', boundary='wrap')
+    for t in range(1, T + 1):
+        dH_dx, dH_dy = heat_kernel_gradient(X, Y, t / T, k)
+
+        dH_dx_3d[t - 1] = dH_dx.astype(np.float32)
+        dH_dy_3d[t - 1] = dH_dy.astype(np.float32)
+
+    return dH_dx_3d, dH_dy_3d
 
 if __name__ == "__main__":
     # Parameters for visualization

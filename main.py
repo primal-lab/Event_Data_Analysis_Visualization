@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from data import load_events_fast, parse_meta
 from event_processing import build_event_tensor, EventDataset
 from processing import generate_heat_kernel_3d_np
+from processing.diffusion import generate_heat_kernel_gradient_3d_np
 from visualization import make_side_by_side_video
 from utils.directory_utils import setup_directories
 from utils.frame_processing import process_frames, process_frames_cpu
@@ -20,7 +21,9 @@ from config.config import (
     # Processing parameters
     EVENT_STEP,
     DIFFUSE_TIME,
+    GRADIENT_PLOT,
     MASK_RGB_FRAMES,
+    K,
     
     # Data dimensions
     HEIGHT,
@@ -46,6 +49,7 @@ from config.config import (
     get_video_out_path,
     get_npy_filename
 )
+from visualization.quiver import generate_quiver_overlays
 
 # Configure logging
 logging.basicConfig(
@@ -90,14 +94,16 @@ def main() -> None:
         logger.info(f"Average Number of Events/RGB Frame: {event_frame_rate/rgb_frame_rate:.2f}")
         
         # Generate kernel
-        logger.info("Generating diffusion kernel...")
-        kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=1.0)
-         
+        logger.info("Generating diffusion kernel and gradient...")
+        kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=K)
+        dH_dx_3d, dH_dy_3d = generate_heat_kernel_gradient_3d_np(kernel_depth, 33, 33, k=K)
         if USE_CPU_PARALLEL:
             logger.info("Processing frames using CPU parallel processing...")
-            frame_buffer = process_frames_cpu(
+            frame_buffer, frame_buffer_dx, frame_buffer_dy = process_frames_cpu(
                 event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
                 kernel=kernel,
+                dH_dx_3d=dH_dx_3d,
+                dH_dy_3d=dH_dy_3d,
                 num_frames=520,
                 height=HEIGHT,
                 width=WIDTH,
@@ -129,9 +135,13 @@ def main() -> None:
         # Save results
         logger.info("Saving results...")
         save_results(frame_buffer, event_tensor, get_npy_filename())
-        
+        print(frame_buffer.shape, frame_buffer_dx.shape, frame_buffer_dy.shape)
         # Generate video
         logger.info("Generating visualization video...")
+        if GRADIENT_PLOT:
+            quiver_imgs = generate_quiver_overlays(frame_buffer_dx, frame_buffer_dy, img_list, f"{sequence_dir}/img")
+        else:
+            quiver_imgs = None
         make_side_by_side_video(
             f"{sequence_dir}/img",
             img_list,
@@ -139,7 +149,10 @@ def main() -> None:
             frame_buffer,
             get_video_out_path(),
             FPS,
-            VIDEO_CODEC
+            VIDEO_CODEC,
+            GRADIENT_PLOT,
+            quiver_imgs
+            
         )
         
         logger.info("Processing completed successfully!")

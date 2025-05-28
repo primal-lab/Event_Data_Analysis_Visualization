@@ -5,7 +5,6 @@ Contains functions for creating various visualizations of event data.
 
 from .video import make_side_by_side_video
 from .heatmap import generate_heatmap, heat_kernel, generate_heat_kernel_3d_np
-from .quiver import create_quiver_video
 
 __all__ = [
     'make_side_by_side_video',

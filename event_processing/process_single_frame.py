@@ -11,13 +11,15 @@ def process_single_frame(args):
             - F_r (int): Frame index
             - event_tensor_dir (str): Directory containing event window files
             - kernel_np (np.ndarray): 3D diffusion kernel
+            - dH_dx_3d (np.ndarray): 3D gradient of diffusion kernel w.r.t x
+            - dH_dy_3d (np.ndarray): 3D gradient of diffusion kernel w.r.t y
             - height (int): Height of output frame
             - width (int): Width of output frame
             
     Returns:
-        tuple: (frame_index, diffused_frame)
+        tuple: (frame_index, diffused_frame, diffused_frame_dx, diffused_frame_dy)
     """
-    F_r, event_tensor_dir, kernel_np, height, width = args
+    F_r, event_tensor_dir, kernel_np, dH_dx_3d, dH_dy_3d, height, width = args
     
     # Get kernel dimensions
     kernel_depth, kH, kW = kernel_np.shape
@@ -26,13 +28,17 @@ def process_single_frame(args):
     
     # Allocate padded canvas
     slice_accum = np.zeros((height + 2 * pad_h, width + 2 * pad_w), dtype=np.float32)
+    slice_accum_dx = np.zeros((height + 2 * pad_h, width + 2 * pad_w), dtype=np.float32)
+    slice_accum_dy = np.zeros((height + 2 * pad_h, width + 2 * pad_w), dtype=np.float32)
     
     # Load event data
     window_path = os.path.join(event_tensor_dir, f"window_{F_r:04d}.pt")
     if not os.path.exists(window_path):
         # Return blank if no event data
         cropped = slice_accum[pad_h:pad_h + height, pad_w:pad_w + width]
-        return F_r, cropped
+        cropped_dx = slice_accum_dx[pad_h:pad_h + height, pad_w:pad_w + width]
+        cropped_dy = slice_accum_dy[pad_h:pad_h + height, pad_w:pad_w + width]
+        return F_r, cropped, cropped_dx, cropped_dy
         
     # Load and process events
     events = torch.load(window_path)
@@ -57,8 +63,12 @@ def process_single_frame(args):
     # Accumulate contributions
     for i in range(len(x_p)):
         slice_accum[y_start[i]:y_end[i], x_start[i]:x_end[i]] += kernel_np[delta_t_idx[i]] * p[i]
+        slice_accum_dx[y_start[i]:y_end[i], x_start[i]:x_end[i]] += dH_dx_3d[delta_t_idx[i]] * p[i]
+        slice_accum_dy[y_start[i]:y_end[i], x_start[i]:x_end[i]] += dH_dy_3d[delta_t_idx[i]] * p[i]
     
     # Crop padding
     cropped = slice_accum[pad_h:pad_h + height, pad_w:pad_w + width]
+    cropped_dx = slice_accum_dx[pad_h:pad_h + height, pad_w:pad_w + width]
+    cropped_dy = slice_accum_dy[pad_h:pad_h + height, pad_w:pad_w + width]
     
-    return F_r, cropped 
+    return F_r, cropped, cropped_dx, cropped_dy 

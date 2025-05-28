@@ -8,11 +8,11 @@ import os
 # ================ Data Paths ================
 DATA_DIR = "/storage/mostafizt/EVIMO/"
 OBJECT_NAME = "box"
-SEQUENCE_ID = 11
+SEQUENCE_ID = 1
 
 # ================ Event Processing Parameters ================
-EVENT_STEP = 2
-DIFFUSE_TIME = 2.0
+EVENT_STEP = 1
+DIFFUSE_TIME = 0.5
 MASK_RGB_FRAMES = 100
 
 # ================ Image Dimensions ================
@@ -20,9 +20,10 @@ HEIGHT = 260
 WIDTH = 346
 
 # ================ Diffusion Parameters ================
-K = 1.0  # Alpha value for heat kernel
+K = 0.5  # Alpha value for heat kernel
 KERNEL_SIZE = (33, 33)  # (height, width) of the kernel
 
+GRADIENT_PLOT = True
 # ================ CPU Parallel Processing Parameters ================
 USE_CPU_PARALLEL = True
 NUM_JOBS = -1
@@ -35,7 +36,7 @@ PIN_MEMORY = True
 PERSISTENT_WORKERS = True
 PREFETCH_FACTOR = 2
 # ================ Video Parameters ================
-FPS = 10
+FPS = 15
 VIDEO_CODEC = 'mp4v'
 
 # ================ Derived Paths ================
