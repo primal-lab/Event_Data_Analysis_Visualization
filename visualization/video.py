@@ -150,8 +150,6 @@ def make_side_by_side_video(img_path, img_list, event_tensor, heat_tensor, out_p
     heat_std = np.std(heat_tensor)
     heat = (255. * np.clip((heat_tensor - 0)/(heat_mean + 5*heat_std + 1e-8), 0, 1)).astype(np.uint8)
 
-    print(f"Event Tensor length: {len(event_tensor)} | Heat Tensor length: {len(heat_tensor)} | RGB Frames: {len(img_list)}")
-
     for t in tqdm(range(T - 1), desc="Generating video"):
         if not os.path.exists(img_list[t]):
             continue
