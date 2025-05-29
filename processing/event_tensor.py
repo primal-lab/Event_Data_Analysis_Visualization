@@ -73,7 +73,7 @@ def process_window(
     event_data = torch.tensor(np.stack([x_f, y_f, p_f, delta_t_idx], axis=1), dtype=torch.float32)
     torch.save(event_data, save_path)
 
-def build_event_tensor(events, frame_info, height, width,  event_step=10, diffuse_time=0.5, mask_rgb_frames= 0, device='cuda', dirname = "/storage/mostafizt/EVIMO/train/box/txt/seq_11/event_tensor"):
+def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, event_step=10, diffuse_time=0.5, mask_rgb_frames= 0, device='cuda', dirname = "/storage/mostafizt/EVIMO/train/box/txt/seq_11/event_tensor"):
     """
     Builds a (num_rgb_frames, H, W) event tensor using scatter_add.
 
@@ -90,9 +90,8 @@ def build_event_tensor(events, frame_info, height, width,  event_step=10, diffus
     print("⚡ Building event tensor on GPU...")
 
     # num_rgb_frames = len(frame_info) - 1
-    num_rgb_frames = 520
-    frame_starts = np.array([t for (t, _) in frame_info])[:520] # Hardcoded 520 because there is a gap in the event data after that
-    img_list = np.array([img for (_, img) in frame_info])[:520]
+    frame_starts = np.array([t for (t, _) in frame_info])[:num_rgb_frames] # Hardcoded 520 because there is a gap in the event data after that
+    img_list = np.array([img for (_, img) in frame_info])[:num_rgb_frames]
     # print(f"Legit Image File length : {(img_list)}")
     event_times_np = events[:, 0]
 

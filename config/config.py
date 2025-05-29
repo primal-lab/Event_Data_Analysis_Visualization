@@ -8,12 +8,12 @@ import os
 # ================ Data Paths ================
 DATA_DIR = "/storage/mostafizt/EVIMO/"
 OBJECT_NAME = "box"
-SEQUENCE_ID = 1
+SEQUENCE_ID = 2
 
 # ================ Event Processing Parameters ================
-EVENT_STEP = 1
+EVENT_STEP = 2
 DIFFUSE_TIME = 0.5
-MASK_RGB_FRAMES = 100
+MASK_RGB_FRAMES = 0
 
 # ================ Image Dimensions ================
 HEIGHT = 260
@@ -31,6 +31,7 @@ NUM_JOBS = -1
 # ================ DataLoader Parameters ================
 BATCH_SIZE = 1 # Batch size is 1 is typically faster than batch size > 1
     # because some event data has a lot of events and it slows down processing of the whole batch
+NUM_FRAMES = 600
 NUM_WORKERS = 24
 PIN_MEMORY = True
 PERSISTENT_WORKERS = True
@@ -56,12 +57,12 @@ def get_event_tensor_dirname():
     """Get the event tensor directory name based on masking."""
     return 'masked_event_tensor' if MASK_RGB_FRAMES > 0 else 'event_tensor'
 
-def get_video_out_path():
+def get_video_out_path(sequence_id, k_idx):
     """Get the output video path."""
-    base_name = "masked_event_diffusion_3.mp4" if MASK_RGB_FRAMES > 0 else "event_diffusion_3.mp4"
+    base_name = f"masked_event_diffusion_{sequence_id}_{k_idx}.mp4" if MASK_RGB_FRAMES > 0 else f"event_diffusion_{sequence_id}_{k_idx}.mp4"
     return os.path.join("videos", base_name)
 
-def get_npy_filename():
+def get_npy_filename(sequence_id, k_idx):
     """Get the output NPY filename."""
-    base_name = "Masked_Diffused_Event_3" if MASK_RGB_FRAMES > 0 else "Diffused_Event_3" 
+    base_name = f"Masked_Diffused_Event_{sequence_id}_{k_idx}" if MASK_RGB_FRAMES > 0 else f"Diffused_Event_{sequence_id}_{k_idx}" 
     return os.path.join("NPY", base_name) 

@@ -58,7 +58,7 @@ def process_frames_cpu(event_tensor_dir: str, kernel: np.ndarray, dH_dx_3d: np.n
     args_list = [(i, event_tensor_dir, kernel, dH_dx_3d, dH_dy_3d, height, width) for i in range(num_frames)]
     
     # Process frames in parallel
-    results = Parallel(n_jobs=n_jobs, verbose=1)(
+    results = Parallel(n_jobs=n_jobs, verbose=0)(
         delayed(process_single_frame)(args) for args in tqdm(args_list, desc="Processing frames")
     )
     

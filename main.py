@@ -19,6 +19,8 @@ from utils.frame_processing import process_frames, process_frames_cpu
 from utils.data_utils import save_results
 from config.config import (
     # Processing parameters
+    NUM_FRAMES,
+    SEQUENCE_ID,
     EVENT_STEP,
     DIFFUSE_TIME,
     GRADIENT_PLOT,
@@ -60,41 +62,42 @@ logger = logging.getLogger(__name__)
 
 def main() -> None:
     """Main execution function."""
-    try:
-        # Setup
-        setup_directories()
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"Using device: {device}")
-        
-        # Setup paths
-        sequence_dir = get_sequence_dir()
-        meta_path = get_meta_path()
-        event_path = get_event_path()
-        event_tensor_dirname = get_event_tensor_dirname()
-        
-        # Load data
-        logger.info("Loading event data and metadata...")
-        frame_info = parse_meta(meta_path)
-        all_events = load_events_fast(event_path)
-        
-        # Generate event tensor
-        logger.info("Generating event tensor...")
-        event_tensor, event_frame_rate, rgb_frame_rate, kernel_depth, img_list, _ = build_event_tensor(
-            events=all_events,
-            frame_info=frame_info,
-            height=HEIGHT,
-            width=WIDTH,
-            event_step=EVENT_STEP,
-            diffuse_time=DIFFUSE_TIME,
-            mask_rgb_frames=MASK_RGB_FRAMES,
-            device=device,
-            dirname=os.path.join(sequence_dir, event_tensor_dirname)
-        )
-        
-        logger.info(f"Average Number of Events/RGB Frame: {event_frame_rate/rgb_frame_rate:.2f}")
-        
+    # Setup
+    setup_directories()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Using device: {device}")
+    
+    # Setup paths
+    sequence_dir = get_sequence_dir()
+    meta_path = get_meta_path()
+    event_path = get_event_path()
+    event_tensor_dirname = get_event_tensor_dirname()
+    
+    # Load data
+    logger.info("Loading event data and metadata...")
+    frame_info = parse_meta(meta_path)
+    all_events = load_events_fast(event_path)
+    
+    # Generate event tensor
+    logger.info("Generating event tensor...")
+    event_tensor, event_frame_rate, rgb_frame_rate, kernel_depth, img_list, _ = build_event_tensor(
+        events=all_events,
+        frame_info=frame_info,
+        height=HEIGHT,
+        width=WIDTH,
+        num_rgb_frames=NUM_FRAMES,
+        event_step=EVENT_STEP,
+        diffuse_time=DIFFUSE_TIME,
+        mask_rgb_frames=MASK_RGB_FRAMES,
+        device=device,
+        dirname=os.path.join(sequence_dir, event_tensor_dirname)
+    )
+    
+    logger.info(f"Average Number of Events/RGB Frame: {event_frame_rate/rgb_frame_rate:.2f}")
+    K_values = np.linspace(0.2, 1.5, 10)/500
+    for idx, K in enumerate(K_values):
         # Generate kernel
-        logger.info("Generating diffusion kernel and gradient...")
+        logger.info(f"Generating diffusion kernel and gradient for alpha: {K:.2e}")
         kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=K)
         dH_dx_3d, dH_dy_3d = generate_heat_kernel_gradient_3d_np(kernel_depth, 33, 33, k=K)
         if USE_CPU_PARALLEL:
@@ -104,7 +107,7 @@ def main() -> None:
                 kernel=kernel,
                 dH_dx_3d=dH_dx_3d,
                 dH_dy_3d=dH_dy_3d,
-                num_frames=520,
+                num_frames=NUM_FRAMES,
                 height=HEIGHT,
                 width=WIDTH,
                 n_jobs=-1
@@ -115,7 +118,7 @@ def main() -> None:
             dataset = EventDataset(
                 event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
                 kernel_np=kernel,
-                rgb_frame_num=520,
+                rgb_frame_num=NUM_FRAMES,
                 height=HEIGHT,
                 width=WIDTH
             )
@@ -134,7 +137,7 @@ def main() -> None:
         
         # Save results
         logger.info("Saving results...")
-        save_results(frame_buffer, event_tensor, get_npy_filename())
+        save_results(frame_buffer, event_tensor, get_npy_filename(SEQUENCE_ID, idx))
         print(frame_buffer.shape, frame_buffer_dx.shape, frame_buffer_dy.shape)
         # Generate video
         logger.info("Generating visualization video...")
@@ -147,7 +150,7 @@ def main() -> None:
             img_list,
             event_tensor,
             frame_buffer,
-            get_video_out_path(),
+            get_video_out_path(SEQUENCE_ID, idx),
             FPS,
             VIDEO_CODEC,
             GRADIENT_PLOT,
@@ -156,10 +159,6 @@ def main() -> None:
         )
         
         logger.info("Processing completed successfully!")
-        
-    except Exception as e:
-        logger.error(f"An error occurred: {str(e)}")
-        raise
 
 if __name__ == "__main__":
     main()

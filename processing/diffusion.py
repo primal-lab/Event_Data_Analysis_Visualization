@@ -50,7 +50,7 @@ def generate_heat_kernel_3d_np(T, H, W, k=0.05):
     Y, X = np.meshgrid(y, x, indexing='ij')
     kernel = np.zeros((T, H, W), dtype=np.float32)
     for t in range(1, T + 1):
-        kernel[t - 1] = heat_kernel(X, Y, t/T, k)
+        kernel[t - 1] = heat_kernel(X, Y, t, k)
         # Add small epsilon to prevent division by zero
         kernel_sum = kernel[t - 1].sum()
         if kernel_sum > 0:
@@ -83,11 +83,11 @@ def generate_heat_kernel_gradient_3d_np(T, H, W, k=0.05):
     dH_dy_3d = np.zeros((T, H, W), dtype=np.float32)
 
     for t in range(1, T + 1):
-        dH_dx, dH_dy = heat_kernel_gradient(X, Y, t / T, k)
+        dH_dx, dH_dy = heat_kernel_gradient(X, Y, t, k)
 
         dH_dx_3d[t - 1] = dH_dx.astype(np.float32)
         dH_dy_3d[t - 1] = dH_dy.astype(np.float32)
-
+    
     return dH_dx_3d, dH_dy_3d
 
 if __name__ == "__main__":

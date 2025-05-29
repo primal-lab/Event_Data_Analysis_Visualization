@@ -46,7 +46,7 @@ def generate_comparison_video(
     data_dir, object_name, sequence_id,
     diffused_path, masked_diffused_path,
     output_path="heatmap_comparison_grid.mp4",
-    num_rgb_frames=520, mask_frames=100, fps=10, resize_to=(320, 320)
+    num_rgb_frames=500, mask_frames=100, fps=10, resize_to=(320, 320)
 ):
     sequence_dir = f"{data_dir}/train/{object_name}/txt/seq_{sequence_id:02d}"
     img_path = os.path.join(sequence_dir, "img")
