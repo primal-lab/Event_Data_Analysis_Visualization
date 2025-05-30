@@ -22,6 +22,7 @@ from config.config import (
     # Processing parameters
     KERNEL_SIZE,
     NUM_FRAMES,
+    POLARITY_MODE,
     SEQUENCE_ID,
     EVENT_STEP,
     DIFFUSE_TIME,
@@ -67,7 +68,7 @@ def main() -> None:
     # Setup
     setup_directories()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info(f"Using device: {device}")
+    # logger.info(f"Using device: {device}")
     
     # Setup paths
     sequence_dir = get_sequence_dir()
@@ -87,6 +88,7 @@ def main() -> None:
         frame_info=frame_info,
         height=HEIGHT,
         width=WIDTH,
+        mode=POLARITY_MODE,
         num_rgb_frames=NUM_FRAMES,
         event_step=EVENT_STEP,
         diffuse_time=DIFFUSE_TIME,
@@ -95,8 +97,9 @@ def main() -> None:
         dirname=os.path.join(sequence_dir, event_tensor_dirname)
     )
     
-    logger.info(f"Average Number of Events/RGB Frame: {event_frame_rate/rgb_frame_rate:.2f}")
+    logger.info(f"Average Number of Events per RGB Frame: {event_frame_rate/rgb_frame_rate:.2f}")
     # Generate kernel
+    idx = 0
     logger.info(f"Generating diffusion kernel and gradient for alpha: {K:.2e}")
     kernel = generate_heat_kernel_3d_np(kernel_depth, KERNEL_SIZE[0], KERNEL_SIZE[1], k=K)
     dH_dx_3d, dH_dy_3d = generate_heat_kernel_gradient_3d_np(kernel_depth, KERNEL_SIZE[0], KERNEL_SIZE[1], k=K)
@@ -141,7 +144,7 @@ def main() -> None:
     # Generate video
     logger.info("Generating visualization video...")
     if GRADIENT_PLOT:
-        quiver_imgs = generate_quiver_overlays(frame_buffer_dx, frame_buffer_dy, img_list, f"{sequence_dir}/img")
+        quiver_imgs = generate_quiver_overlays(frame_buffer_dx, frame_buffer_dy, img_list, f"{sequence_dir}/img", step=4)
     else:
         quiver_imgs = None
     make_side_by_side_video(

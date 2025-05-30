@@ -73,7 +73,7 @@ def process_window(i, events_cpu, frame_starts, kernel_depth, diffuse_time, even
     event_data = torch.tensor(np.stack([x_f, y_f, p_f, delta_t_idx], axis=1), dtype=torch.float32)
     torch.save(event_data, save_path)
 
-def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, event_step=10, diffuse_time=0.5, mask_rgb_frames= 0, device='cuda', dirname = "/storage/mostafizt/EVIMO/train/box/txt/seq_11/event_tensor"):
+def build_event_tensor(events, frame_info, height, width, mode = 'positive',  num_rgb_frames=500, event_step=10, diffuse_time=0.5, mask_rgb_frames= 0, device='cuda', dirname = "/storage/mostafizt/EVIMO/train/box/txt/seq_11/event_tensor"):
     """
     Builds a (num_rgb_frames, H, W) event tensor using scatter_add.
 
@@ -87,12 +87,11 @@ def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, e
     Returns:
         event_tensor (torch.Tensor): shape (num_rgb_frames, height, width)
     """
-    print("⚡ Building event tensor on GPU...")
+    print("Building event tensor on GPU...")
 
     # num_rgb_frames = len(frame_info) - 1
     frame_starts = np.array([t for (t, _) in frame_info])[:num_rgb_frames] # Hardcoded 520 because there is a gap in the event data after that
     img_list = np.array([img for (_, img) in frame_info])[:num_rgb_frames]
-    # print(f"Legit Image File length : {(img_list)}")
     event_times_np = events[:, 0]
 
     # Map each event to its corresponding RGB frame
@@ -103,8 +102,8 @@ def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, e
     event_times_np = event_times_np[valid_rgb]
     event_frame_rate = len(np.unique(event_times_np))/(np.max(event_times_np) - np.min(event_times_np))
     rgb_frame_rate = num_rgb_frames/(np.max(frame_starts) - np.min(frame_starts))
-    print(f"Event Frame Rate: {event_frame_rate:.2e}")
-    print(f"RGB Frame Rate: {rgb_frame_rate:.2f}")
+    print(f"Event Frame Rate: {event_frame_rate:.2e}/second")
+    print(f"RGB Frame Rate: {rgb_frame_rate:.2f}/second")
     kernel_depth = int(event_frame_rate*diffuse_time/event_step)
     # Convert to torch
     frame_indices_t = torch.tensor(frame_indices, dtype=torch.long, device=device)
@@ -117,6 +116,15 @@ def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, e
         # polarity[polarity == 0] = -1  # ✅ map 0 to -1
     else:
         polarity = torch.zeros_like(x, dtype=torch.float32)  
+    
+    if mode.lower() == 'positive':
+        pass
+    elif mode.lower() == 'negative':
+        polarity = 1 - polarity
+    elif mode.lower() == 'both':
+        polarity = torch.where(polarity == 0, torch.tensor(-1, device=polarity.device, dtype=polarity.dtype), torch.tensor(1, device=polarity.device, dtype=polarity.dtype))
+    else:
+        raise ValueError("Mode must be one of: 'positive', 'negative', or 'both'")
     # Filter spatially valid
     valid_pos = (x >= 0) & (x < width) & (y >= 0) & (y < height)
     x = x[valid_pos]
@@ -139,7 +147,7 @@ def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, e
         "x": x.detach().cpu().numpy(),
         "y": y.detach().cpu().numpy(),
         "t": ts.detach().cpu().numpy(),
-        "p": (polarity.detach().cpu().numpy() - 0.0)*1,
+        "p": (polarity.detach().cpu().numpy() - 0)*1, # ✅ map 0 to -1 For 0, (0 - 0.5)*2 = -1 and for 1, (1 - 0.5)*2 = 1
         "frame_idx": frame_indices_t.detach().cpu().numpy()
     }
     frame_indices = events_cpu["frame_idx"]
@@ -158,7 +166,7 @@ def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, e
     # Masking condition
     t_cutoff = num_rgb_frames - mask_rgb_frames
     events_cpu["p"][events_cpu["frame_idx"] >= t_cutoff] = 0
-    print("💽 Saving per-frame event tensors to 'event_tensor/frame_*.pt' ...")
+    print("Saving per-frame event tensors to 'event_tensor/frame_*.pt' ...")
     num_jobs = -1  # use all cores, or set to e.g. 8
 
     # Parallel(n_jobs=num_jobs)(
@@ -178,7 +186,7 @@ def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, e
         width=width,
         dirname = dirname
     )
-    for i in tqdm(range(num_rgb_frames), desc="💾 Saving diffusion windows")
+    for i in tqdm(range(num_rgb_frames), desc="Saving diffusion windows")
 )
 
 

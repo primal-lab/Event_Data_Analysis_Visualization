@@ -11,7 +11,7 @@ OBJECT_NAME = "box"
 SEQUENCE_ID = 1
 
 # ================ Event Processing Parameters ================
-EVENT_STEP = 1
+EVENT_STEP = 1 # Set this to higher value for skipping times in event data and make the generation process faster. 
 DIFFUSE_TIME = 0.75
 MASK_RGB_FRAMES = 0
 
@@ -22,6 +22,7 @@ WIDTH = 346
 # ================ Diffusion Parameters ================
 K = 3.0  # Alpha value for heat kernel
 KERNEL_SIZE = (33, 33)  # (height, width) of the kernel
+POLARITY_MODE = 'Positive' # 'Positive', 'Negative' or 'Both'
 
 GRADIENT_PLOT = True
 # ================ CPU Parallel Processing Parameters ================

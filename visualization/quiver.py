@@ -8,7 +8,7 @@ import os
 from tqdm import tqdm
 
 def generate_quiver_overlays(dH_dx_3d, dH_dy_3d, img_list, img_path,
-                              scale=1.0, step=10, max_magnitude=5.0,
+                              scale=1.0, step=4, max_magnitude=5.0,
                               save_debug_png=False):
     """
     Generate quiver overlays with arrow lengths proportional to magnitude (clipped).
