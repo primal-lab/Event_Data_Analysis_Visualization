@@ -59,7 +59,7 @@ def process_frames_cpu(event_tensor_dir: str, kernel: np.ndarray, dH_dx_3d: np.n
     
     # Process frames in parallel
     results = Parallel(n_jobs=n_jobs, verbose=0)(
-        delayed(process_single_frame)(args) for args in tqdm(args_list, desc="Processing frames")
+        delayed(process_single_frame)(args) for args in tqdm(args_list, desc="Processing frames", colour='green')
     )
     
     # Fill frame buffer with results

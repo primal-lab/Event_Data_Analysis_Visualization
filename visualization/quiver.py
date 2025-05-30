@@ -50,8 +50,8 @@ def generate_quiver_overlays(dH_dx_3d, dH_dy_3d, img_list, img_path,
         mags_clipped = np.clip(mags, 0, max_magnitude)
 
         # Normalize vectors but scale by clipped magnitude
-        U_scaled = (U / (mags.sum() + 1e-8)) * 1 * scale
-        V_scaled = (V / (mags.sum() + 1e-8)) * 1 * scale
+        U_scaled = (U / (mags + 1e-8)) * mags_clipped * scale
+        V_scaled = (V / (mags + 1e-8)) * mags_clipped * scale
 
         # Create figure
         fig, ax = plt.subplots(figsize=(W / 100, H / 100), dpi=100)

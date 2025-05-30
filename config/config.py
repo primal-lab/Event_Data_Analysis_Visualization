@@ -8,11 +8,11 @@ import os
 # ================ Data Paths ================
 DATA_DIR = "/storage/mostafizt/EVIMO/"
 OBJECT_NAME = "box"
-SEQUENCE_ID = 2
+SEQUENCE_ID = 1
 
 # ================ Event Processing Parameters ================
-EVENT_STEP = 2
-DIFFUSE_TIME = 0.5
+EVENT_STEP = 1
+DIFFUSE_TIME = 0.75
 MASK_RGB_FRAMES = 0
 
 # ================ Image Dimensions ================
@@ -20,7 +20,7 @@ HEIGHT = 260
 WIDTH = 346
 
 # ================ Diffusion Parameters ================
-K = 0.5  # Alpha value for heat kernel
+K = 0.2  # Alpha value for heat kernel
 KERNEL_SIZE = (33, 33)  # (height, width) of the kernel
 
 GRADIENT_PLOT = True

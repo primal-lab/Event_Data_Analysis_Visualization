@@ -120,6 +120,10 @@ The script generates:
 - Side-by-side videos
 - Visualization plots
 
+## Good for visualization
+- box/seq_01
+- wall/seq_00
+
 ## 📝 TODO
 
 ### High Priority

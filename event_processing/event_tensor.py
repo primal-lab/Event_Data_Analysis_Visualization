@@ -103,7 +103,7 @@ def build_event_tensor(events, frame_info, height, width,  num_rgb_frames=500, e
     event_times_np = event_times_np[valid_rgb]
     event_frame_rate = len(np.unique(event_times_np))/(np.max(event_times_np) - np.min(event_times_np))
     rgb_frame_rate = num_rgb_frames/(np.max(frame_starts) - np.min(frame_starts))
-    print(f"Event Frame Rate: {event_frame_rate:.2f}")
+    print(f"Event Frame Rate: {event_frame_rate:.2e}")
     print(f"RGB Frame Rate: {rgb_frame_rate:.2f}")
     kernel_depth = int(event_frame_rate*diffuse_time/event_step)
     # Convert to torch

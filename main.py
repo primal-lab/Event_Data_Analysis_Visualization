@@ -8,6 +8,7 @@ import logging
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from data import load_events_fast, parse_meta
 from event_processing import build_event_tensor, EventDataset
@@ -94,8 +95,8 @@ def main() -> None:
     )
     
     logger.info(f"Average Number of Events/RGB Frame: {event_frame_rate/rgb_frame_rate:.2f}")
-    K_values = np.linspace(0.2, 1.5, 10)/500
-    for idx, K in enumerate(K_values):
+    K_values = np.linspace(1.5, 8, 10)
+    for idx, K in tqdm(enumerate(K_values), colour='green'):
         # Generate kernel
         logger.info(f"Generating diffusion kernel and gradient for alpha: {K:.2e}")
         kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=K)
@@ -138,7 +139,6 @@ def main() -> None:
         # Save results
         logger.info("Saving results...")
         save_results(frame_buffer, event_tensor, get_npy_filename(SEQUENCE_ID, idx))
-        print(frame_buffer.shape, frame_buffer_dx.shape, frame_buffer_dy.shape)
         # Generate video
         logger.info("Generating visualization video...")
         if GRADIENT_PLOT:
