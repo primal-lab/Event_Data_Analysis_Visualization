@@ -89,44 +89,8 @@ def generate_comparison_video(
     print(f"✅ Saved: {output_path}")
 
 
-# def make_side_by_side_video(img_path, img_list, event_tensor, heat_tensor, out_path, fps=30, codec="mp4v"):
-#     T = heat_tensor.shape[0]
-#     _, H, W = event_tensor.shape
-#     img_list = [os.path.join(img_path, i) for i in img_list]
-#     out_w, out_h = W * 3, H
-#     fourcc = cv2.VideoWriter_fourcc(*codec)
-#     out_dir = os.path.dirname(out_path)
-#     if out_dir:
-#         os.makedirs(out_dir, exist_ok=True)
-#     writer = cv2.VideoWriter(out_path, fourcc, int(fps), (out_w, out_h))
-#     # Normalization
-#     event_tensor = event_tensor.cpu().numpy()
-#     event_mean = np.mean(event_tensor)
-#     event_std = np.std(event_tensor)
-#     event = (255.*np.clip((event_tensor - 0)/(event_mean + 5*event_std + 1e-8), 0, 1)).astype(np.uint8)
-    
-#     heat_mean = np.mean(heat_tensor)
-#     heat_std = np.std(heat_tensor)
-#     heat = (255.*np.clip((heat_tensor - 0)/(heat_mean + 5*heat_std + 1e-8), 0, 1)).astype(np.uint8)
-#     print(f"Event Tensor length: {len(event_tensor)} Diffused Tensor length: {len(heat_tensor)} Number of rgb frames : {len(img_list)}")
-#     for t in tqdm(range(T-1), desc="Generating video"): 
-#         if not os.path.exists(img_list[t]):
-#             continue
-#         img = cv2.imread(img_list[t])
-#         if img.shape[:2] != (H, W):
-#             img = cv2.resize(img, (W, H))
-        
-#         # raw_col = cv2.applyColorMap(event[t], cv2.COLORMAP_INFERNO)
-
-#         raw_col = apply_inferno_colormap(event[t])
-        
-#         raw_heat = cv2.applyColorMap(heat[t], cv2.COLORMAP_INFERNO)
-#         # print(f"Frame {t} Video heat sum {np.mean(raw_heat)}")
-#         combined = np.hstack([img, raw_col, raw_heat])
-#         writer.write(combined)
-
-#     writer.release()
-#     print(f" Video saved to {out_path}")
+def minmax_norm(data_3d):
+    return (data_3d - np.min(data_3d))/(np.max(data_3d) - np.min(data_3d) + 1e-8)
 
 def make_side_by_side_video(img_path, img_list, event_tensor, heat_tensor, out_path,
                              fps=30, codec="mp4v", gradient_plot=False, quiver_imgs=None):
@@ -142,10 +106,14 @@ def make_side_by_side_video(img_path, img_list, event_tensor, heat_tensor, out_p
 
     # Normalize
     event_tensor = event_tensor.cpu().numpy()
+    event_tensor/=event_tensor.sum(axis=(1, 2), keepdims=True)
+    event_tensor = minmax_norm(event_tensor)
     event_mean = np.mean(event_tensor)
     event_std = np.std(event_tensor)
     event = (255. * np.clip((event_tensor - 0)/(event_mean + 5*event_std + 1e-8), 0, 1)).astype(np.uint8)
 
+    # heat_tensor /= heat_tensor.sum(axis=(1, 2), keepdims=True)
+    # heat_tensor -= heat_tensor.min() 
     heat_mean = np.mean(heat_tensor)
     heat_std = np.std(heat_tensor)
     heat = (255. * np.clip((heat_tensor - 0)/(heat_mean + 5*heat_std + 1e-8), 0, 1)).astype(np.uint8)

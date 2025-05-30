@@ -47,6 +47,8 @@ GRADIENT_PLOT → If True, generates a video with RGB frames overlaid with gradi
 
 NUM_FRAMES → Total number of RGB frames to process from the selected video.
 
+POLARITY_MODE → If set to 'Positive', it will only process +1 polarity data. If set to 'Negative' it will set 0s to +1 and +1s to 0. If set to 'Both', it will convert the 0s to -1
+
 ```
 
 2. Run the main script:

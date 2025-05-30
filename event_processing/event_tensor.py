@@ -122,7 +122,8 @@ def build_event_tensor(events, frame_info, height, width, mode = 'positive',  nu
     elif mode.lower() == 'negative':
         polarity = 1 - polarity
     elif mode.lower() == 'both':
-        polarity = torch.where(polarity == 0, torch.tensor(-1, device=polarity.device, dtype=polarity.dtype), torch.tensor(1, device=polarity.device, dtype=polarity.dtype))
+        polarity = 2*(polarity - 0.5)
+        # polarity = torch.where(polarity == 0, torch.tensor(-1, device=polarity.device, dtype=polarity.dtype), torch.tensor(1, device=polarity.device, dtype=polarity.dtype))
     else:
         raise ValueError("Mode must be one of: 'positive', 'negative', or 'both'")
     # Filter spatially valid
