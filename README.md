@@ -2,7 +2,7 @@
 
 A powerful Python-based toolkit for processing, analyzing, and visualizing event-based camera data. This project provides efficient tools for event tensor generation, diffusion processing, and visualization of event data alongside RGB frames.
 
-![Heat Diffusion Visualization](demo/masked_event_diffusion_3.gif)
+![Heat Diffusion Visualization](demo/output_cropped.gif)
 
 ## 🌟 Features
 
@@ -26,30 +26,11 @@ A powerful Python-based toolkit for processing, analyzing, and visualizing event
 
 ## 📋 Requirements
 
-- Python 3.8+
+- Python 3.9+
 - CUDA-compatible GPU (recommended)
 - Conda package manager
 
 ## 🚀 Installation
-
-### Option 1: Using Conda (Recommended)
-
-1. Clone the repository:
-```bash
-git clone https://github.com/primal-lab/Event_Data_Analysis_Visualization.git
-cd Event_Data_Analysis_Visualization
-```
-
-2. Create and activate the conda environment:
-```bash
-# Create environment from environment.yml
-conda env create -f environment.yml
-
-# Activate the environment
-conda activate event_env
-```
-
-### Option 2: Manual Installation
 
 1. Clone the repository:
 ```bash
@@ -98,7 +79,20 @@ event-data-analysis/
 
 ## 🎯 Usage
 
-1. Configure your parameters in `config/config.py`
+1. Configure your parameters in `config/config.py` Here are some special parameters:
+
+```
+EVENT_STEP → Number of events to retain per unique timestamp.
+
+DIFFUSE_TIME → Duration (in time units) over which events are diffused; also determines the kernel's temporal depth.
+
+MASK_RGB_FRAMES → Number of final RGB frames on which to apply masking.
+
+GRADIENT_PLOT → If True, generates a video with RGB frames overlaid with gradient vectors, accumulated events, and diffused events. If False, the gradient overlay is omitted.
+
+NUM_FRAMES → Total number of RGB frames to process from the selected video.
+
+```
 
 2. Run the main script:
 ```bash

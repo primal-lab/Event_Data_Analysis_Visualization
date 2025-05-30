@@ -21,7 +21,7 @@ WIDTH = 346
 
 # ================ Diffusion Parameters ================
 K = 0.2  # Alpha value for heat kernel
-KERNEL_SIZE = (33, 33)  # (height, width) of the kernel
+KERNEL_SIZE = (51, 51)  # (height, width) of the kernel
 
 GRADIENT_PLOT = True
 # ================ CPU Parallel Processing Parameters ================
@@ -31,7 +31,7 @@ NUM_JOBS = -1
 # ================ DataLoader Parameters ================
 BATCH_SIZE = 1 # Batch size is 1 is typically faster than batch size > 1
     # because some event data has a lot of events and it slows down processing of the whole batch
-NUM_FRAMES = 600
+NUM_FRAMES = 800
 NUM_WORKERS = 24
 PIN_MEMORY = True
 PERSISTENT_WORKERS = True
