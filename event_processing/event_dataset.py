@@ -53,8 +53,6 @@ class EventDataset(Dataset):
         # Load precomputed event data (x, y, p, delta_t_idx)
         events = torch.load(window_path)  # shape: (N, 4)
         events_np = events.numpy()
-        # if F_r>=628-60:print(f"Frame: {F_r} event summation: {np.sum(events_np)}")
-        # Extract columns from events_np (assumed pre-filtered)
         x, y, p, delta_t_idx = events_np.T
         x = x.astype(int)
         y = y.astype(int)

@@ -12,8 +12,8 @@ from tqdm import tqdm
 
 from data import load_events_fast, parse_meta
 from event_processing import build_event_tensor, EventDataset
-from processing import generate_heat_kernel_3d_np
-from processing.diffusion import generate_heat_kernel_gradient_3d_np
+from heat_analysis import generate_heat_kernel_3d_np
+from heat_analysis.diffusion import generate_heat_kernel_gradient_3d_np
 from visualization import make_side_by_side_video
 from utils.directory_utils import setup_directories
 from utils.frame_processing import process_frames, process_frames_cpu
