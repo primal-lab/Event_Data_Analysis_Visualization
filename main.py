@@ -95,70 +95,68 @@ def main() -> None:
     )
     
     logger.info(f"Average Number of Events/RGB Frame: {event_frame_rate/rgb_frame_rate:.2f}")
-    K_values = np.linspace(1.5, 8, 10)
-    for idx, K in tqdm(enumerate(K_values), colour='green'):
-        # Generate kernel
-        logger.info(f"Generating diffusion kernel and gradient for alpha: {K:.2e}")
-        kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=K)
-        dH_dx_3d, dH_dy_3d = generate_heat_kernel_gradient_3d_np(kernel_depth, 33, 33, k=K)
-        if USE_CPU_PARALLEL:
-            logger.info("Processing frames using CPU parallel processing...")
-            frame_buffer, frame_buffer_dx, frame_buffer_dy = process_frames_cpu(
-                event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
-                kernel=kernel,
-                dH_dx_3d=dH_dx_3d,
-                dH_dy_3d=dH_dy_3d,
-                num_frames=NUM_FRAMES,
-                height=HEIGHT,
-                width=WIDTH,
-                n_jobs=-1
-            )
-        else:
-            # Original DataLoader processing
-            logger.info("Processing frames using DataLoader...")
-            dataset = EventDataset(
-                event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
-                kernel_np=kernel,
-                rgb_frame_num=NUM_FRAMES,
-                height=HEIGHT,
-                width=WIDTH
-            )
-            
-            loader = DataLoader(
-                dataset,
-                batch_size=BATCH_SIZE,
-                shuffle=False,
-                num_workers=NUM_WORKERS,
-                pin_memory=PIN_MEMORY,
-                persistent_workers=PERSISTENT_WORKERS,
-                prefetch_factor=PREFETCH_FACTOR
-            )
-            
-            frame_buffer = process_frames(loader, device)
-        
-        # Save results
-        logger.info("Saving results...")
-        save_results(frame_buffer, event_tensor, get_npy_filename(SEQUENCE_ID, idx))
-        # Generate video
-        logger.info("Generating visualization video...")
-        if GRADIENT_PLOT:
-            quiver_imgs = generate_quiver_overlays(frame_buffer_dx, frame_buffer_dy, img_list, f"{sequence_dir}/img")
-        else:
-            quiver_imgs = None
-        make_side_by_side_video(
-            f"{sequence_dir}/img",
-            img_list,
-            event_tensor,
-            frame_buffer,
-            get_video_out_path(SEQUENCE_ID, idx),
-            FPS,
-            VIDEO_CODEC,
-            GRADIENT_PLOT,
-            quiver_imgs
-            
+    # Generate kernel
+    logger.info(f"Generating diffusion kernel and gradient for alpha: {K:.2e}")
+    kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=K)
+    dH_dx_3d, dH_dy_3d = generate_heat_kernel_gradient_3d_np(kernel_depth, 33, 33, k=K)
+    if USE_CPU_PARALLEL:
+        logger.info("Processing frames using CPU parallel processing...")
+        frame_buffer, frame_buffer_dx, frame_buffer_dy = process_frames_cpu(
+            event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
+            kernel=kernel,
+            dH_dx_3d=dH_dx_3d,
+            dH_dy_3d=dH_dy_3d,
+            num_frames=NUM_FRAMES,
+            height=HEIGHT,
+            width=WIDTH,
+            n_jobs=-1
+        )
+    else:
+        # Original DataLoader processing
+        logger.info("Processing frames using DataLoader...")
+        dataset = EventDataset(
+            event_tensor_dir=os.path.join(sequence_dir, event_tensor_dirname),
+            kernel_np=kernel,
+            rgb_frame_num=NUM_FRAMES,
+            height=HEIGHT,
+            width=WIDTH
         )
         
-        logger.info("Processing completed successfully!")
+        loader = DataLoader(
+            dataset,
+            batch_size=BATCH_SIZE,
+            shuffle=False,
+            num_workers=NUM_WORKERS,
+            pin_memory=PIN_MEMORY,
+            persistent_workers=PERSISTENT_WORKERS,
+            prefetch_factor=PREFETCH_FACTOR
+        )
+        
+        frame_buffer = process_frames(loader, device)
+    
+    # Save results
+    logger.info("Saving results...")
+    save_results(frame_buffer, event_tensor, get_npy_filename(SEQUENCE_ID, idx))
+    # Generate video
+    logger.info("Generating visualization video...")
+    if GRADIENT_PLOT:
+        quiver_imgs = generate_quiver_overlays(frame_buffer_dx, frame_buffer_dy, img_list, f"{sequence_dir}/img")
+    else:
+        quiver_imgs = None
+    make_side_by_side_video(
+        f"{sequence_dir}/img",
+        img_list,
+        event_tensor,
+        frame_buffer,
+        get_video_out_path(SEQUENCE_ID, idx),
+        FPS,
+        VIDEO_CODEC,
+        GRADIENT_PLOT,
+        quiver_imgs
+        
+    )
+    
+    logger.info("Processing completed successfully!")
 
 if __name__ == "__main__":
     main()

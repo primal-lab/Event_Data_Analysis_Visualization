@@ -20,7 +20,7 @@ HEIGHT = 260
 WIDTH = 346
 
 # ================ Diffusion Parameters ================
-K = 0.2  # Alpha value for heat kernel
+K = 2.0  # Alpha value for heat kernel
 KERNEL_SIZE = (51, 51)  # (height, width) of the kernel
 
 GRADIENT_PLOT = True
