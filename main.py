@@ -20,6 +20,7 @@ from utils.frame_processing import process_frames, process_frames_cpu
 from utils.data_utils import save_results
 from config.config import (
     # Processing parameters
+    KERNEL_SIZE,
     NUM_FRAMES,
     SEQUENCE_ID,
     EVENT_STEP,
@@ -97,8 +98,8 @@ def main() -> None:
     logger.info(f"Average Number of Events/RGB Frame: {event_frame_rate/rgb_frame_rate:.2f}")
     # Generate kernel
     logger.info(f"Generating diffusion kernel and gradient for alpha: {K:.2e}")
-    kernel = generate_heat_kernel_3d_np(kernel_depth, 33, 33, k=K)
-    dH_dx_3d, dH_dy_3d = generate_heat_kernel_gradient_3d_np(kernel_depth, 33, 33, k=K)
+    kernel = generate_heat_kernel_3d_np(kernel_depth, KERNEL_SIZE[0], KERNEL_SIZE[1], k=K)
+    dH_dx_3d, dH_dy_3d = generate_heat_kernel_gradient_3d_np(kernel_depth, KERNEL_SIZE[0], KERNEL_SIZE[1], k=K)
     if USE_CPU_PARALLEL:
         logger.info("Processing frames using CPU parallel processing...")
         frame_buffer, frame_buffer_dx, frame_buffer_dy = process_frames_cpu(

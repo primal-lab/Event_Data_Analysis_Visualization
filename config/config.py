@@ -20,8 +20,8 @@ HEIGHT = 260
 WIDTH = 346
 
 # ================ Diffusion Parameters ================
-K = 2.0  # Alpha value for heat kernel
-KERNEL_SIZE = (51, 51)  # (height, width) of the kernel
+K = 3.0  # Alpha value for heat kernel
+KERNEL_SIZE = (33, 33)  # (height, width) of the kernel
 
 GRADIENT_PLOT = True
 # ================ CPU Parallel Processing Parameters ================
