@@ -9,8 +9,7 @@ A powerful Python-based toolkit for processing, analyzing, and visualizing event
 - **Event Data Processing**
   - Fast event data loading and parsing
   - Efficient event tensor generation
-  - Advanced diffusion processing
-  - GPU-accelerated computations
+  - Advanced diffusion processing inspired by heat diffusion
 
 - **Visualization**
   - Side-by-side video generation
@@ -18,17 +17,6 @@ A powerful Python-based toolkit for processing, analyzing, and visualizing event
   - Quiver plot generation
   - Custom colormap support
 
-- **Data Management**
-  - Organized data structure
-  - Efficient data loading
-  - Configurable parameters
-  - Progress tracking
-
-## 📋 Requirements
-
-- Python 3.9+
-- CUDA-compatible GPU (recommended)
-- Conda package manager
 
 ## 🚀 Installation
 
@@ -40,41 +28,8 @@ cd Event_Data_Analysis_Visualization
 
 2. Create and activate a conda environment:
 ```bash
-conda create -n event_env python=3.8
+conda env create -f environment.yml
 conda activate event_env
-```
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-## 📁 Project Structure
-
-```
-event-data-analysis/
-├── config/
-│   └── config.py           # Configuration parameters
-├── data/
-│   ├── __init__.py
-│   ├── event_loader.py     # Event data loading utilities
-│   └── frame_loader.py     # RGB frame loading utilities
-├── event_processing/
-│   ├── __init__.py
-│   ├── event_tensor.py     # Event tensor generation
-│   └── event_dataset.py    # Dataset implementation
-├── processing/
-│   ├── __init__.py
-│   └── diffusion.py        # Diffusion processing
-├── visualization/
-│   ├── __init__.py
-│   ├── video.py           # Video generation
-│   ├── heatmap.py         # Heatmap visualization
-│   └── quiver.py          # Quiver plot generation
-├── main.py                # Main execution script
-├── requirements.txt       # Project dependencies
-├── environment.yml        # Conda environment specification
-└── README.md             # Project documentation
 ```
 
 ## 🎯 Usage
@@ -82,7 +37,7 @@ event-data-analysis/
 1. Configure your parameters in `config/config.py` Here are some special parameters:
 
 ```
-EVENT_STEP → Number of events to retain per unique timestamp.
+EVENT_STEP → Events to keep per unique event timestamp.
 
 DIFFUSE_TIME → Duration (in time units) over which events are diffused; also determines the kernel's temporal depth.
 
@@ -120,13 +75,6 @@ The script generates:
 
 ## 📝 TODO
 
-### High Priority
-- [ ] Clean up and optimize masked event diffusion implementation
-- [ ] Enhance quiver plot visualization
-
-
-### Medium Priority
-- [ ] Add System Arguments for the config file
 
 ## 🤝 Contributing
 

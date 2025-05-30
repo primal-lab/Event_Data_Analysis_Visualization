@@ -43,7 +43,6 @@ venv.bak/
 *.txt
 *.csv
 *.json
-*.yaml
 *.yml
 *.jsonl
 *.jsonl.gz
